@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,16 +39,33 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'users',
+    'job_bookings',
+    'payments',
+    'reviews',
+    'messaging',
+    'corsheaders',
+    'rest_framework',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'rest_framework.authtoken'  
+
+    
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # must be here
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
+
 ]
 
 ROOT_URLCONF = 'jobber_pro.urls'
@@ -80,6 +99,8 @@ DATABASES = {
 }
 
 
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -97,7 +118,48 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+# Without this config, you'd need to manually add authentication and permission classes 
+# to every single view/viewset—tedious and error-prone. see hire_me notes on notpad for more info
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',  # For DRF interface
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated"
+    ]
+}
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME' : timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME' :  timedelta(days=2),
+}
+
+# Local development — allow everything for testing
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend'  # Fixed typo
+)
+
+# Frontend integration settings
+# FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')  # Your React app URL
+LOGIN_REDIRECT_URL = '/callback/'  # Use custom callback that generates token
+
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['email', 'profile'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'OAUTH_PKCE_ENABLED': True,
+        'FETCH_USERINFO': True,
+    }
+}
+
+# Store social account tokens for API calls
+SOCIALACCOUNT_STORE_TOKENS = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
